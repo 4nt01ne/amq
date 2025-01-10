@@ -4,8 +4,168 @@ middleware\_automation.amq Release Notes
 
 .. contents:: Topics
 
-v2.0.1-devel
+v2.3.0-devel
 ============
+
+Release Summary
+---------------
+
+Internal release, documentation or test changes only.
+
+v2.2.7
+======
+
+Bugfixes
+--------
+
+- Fix password masking JAVA_HOME and undefined variable error `#198 <https://github.com/ansible-middleware/amq/pull/198>`_
+
+v2.2.6
+======
+
+Minor Changes
+-------------
+
+- Add parameter ``activemq_logger_filepath`` to configure logfile path `#187 <https://github.com/ansible-middleware/amq/pull/187>`_
+- Add role expansion parameters for ldap/AD configuration `#193 <https://github.com/ansible-middleware/amq/pull/193>`_
+
+Bugfixes
+--------
+
+- Force ``activemq_configuration_file_refresh_period`` integer type in handler `#191 <https://github.com/ansible-middleware/amq/pull/191>`_
+- Improve execution time for masked passwords `#194 <https://github.com/ansible-middleware/amq/pull/194>`_
+
+v2.2.5
+======
+
+Bugfixes
+--------
+
+- Fix invalid ``broker-connections`` when boolean options are used `#179 <https://github.com/ansible-middleware/amq/pull/179>`_
+- Update default for ``activemq_systemd_wait_for_log_ha_string`` `#186 <https://github.com/ansible-middleware/amq/pull/186>`_
+
+v2.2.4
+======
+
+Bugfixes
+--------
+
+- Fix broker.xml connector and connector-ref when using federation `#178 <https://github.com/ansible-middleware/amq/pull/178>`_
+- New parameter to configure clustering without HA `#175 <https://github.com/ansible-middleware/amq/pull/175>`_
+
+v2.2.3
+======
+
+Bugfixes
+--------
+
+- Check broadcast/discovery groups absent with ``provided`` discovery `#174 <https://github.com/ansible-middleware/amq/pull/174>`_
+
+v2.2.2
+======
+
+Minor Changes
+-------------
+
+- New parameter value to explicitly list ``cluster-connections`` `#168 <https://github.com/ansible-middleware/amq/pull/168>`_
+- Parameters for ``activemq_addresses`` as a dictionary `#171 <https://github.com/ansible-middleware/amq/pull/171>`_
+
+Bugfixes
+--------
+
+- Prevent some configs to generate non-unique ``connector-ref`` in ``cluster-connections`` `#170 <https://github.com/ansible-middleware/amq/pull/170>`_
+
+v2.2.1
+======
+
+Minor Changes
+-------------
+
+- Add ``web_origin`` parameter to ``activemq_facts`` module `#167 <https://github.com/ansible-middleware/amq/pull/167>`_
+- Add critical analyzer configuration `#162 <https://github.com/ansible-middleware/amq/pull/162>`_
+- Add more journal configs `#161 <https://github.com/ansible-middleware/amq/pull/161>`_
+- New ``activemq_console_bind_url`` parameter `#164 <https://github.com/ansible-middleware/amq/pull/164>`_
+- New ``activemq_systemd_expand_environment`` parameter `#165 <https://github.com/ansible-middleware/amq/pull/165>`_
+
+Bugfixes
+--------
+
+- Fix condition for transferring key/trust store `#163 <https://github.com/ansible-middleware/amq/pull/163>`_
+- Fix scenarios where duplicate XInclude can be present `#166 <https://github.com/ansible-middleware/amq/pull/166>`_
+
+v2.2.0
+======
+
+Major Changes
+-------------
+
+- Broker modular configuration with XInclude `#159 <https://github.com/ansible-middleware/amq/pull/159>`_
+- New activemq_uninstall role `#150 <https://github.com/ansible-middleware/amq/pull/150>`_
+
+Minor Changes
+-------------
+
+- Add additional ha-policy parameters `#155 <https://github.com/ansible-middleware/amq/pull/155>`_
+- Add network check parameters `#152 <https://github.com/ansible-middleware/amq/pull/152>`_
+- Add wait_for configuration `#156 <https://github.com/ansible-middleware/amq/pull/156>`_
+- Allow to configure message counters `#153 <https://github.com/ansible-middleware/amq/pull/153>`_
+- Broker plugins support `#160 <https://github.com/ansible-middleware/amq/pull/160>`_
+- Define systemd entrypoint `#151 <https://github.com/ansible-middleware/amq/pull/151>`_
+
+Bugfixes
+--------
+
+- Allow mixing masked and unmasked passwords `#149 <https://github.com/ansible-middleware/amq/pull/149>`_
+- Use bind_address instead of hostname for console binding `#158 <https://github.com/ansible-middleware/amq/pull/158>`_
+
+v2.1.1
+======
+
+Minor Changes
+-------------
+
+- Add fact gathering module for amq `#145 <https://github.com/ansible-middleware/amq/pull/145>`_
+- Add ha with replication policy `#147 <https://github.com/ansible-middleware/amq/pull/147>`_
+- Allow to configure broker properties with properties file `#143 <https://github.com/ansible-middleware/amq/pull/143>`_
+
+Bugfixes
+--------
+
+- Update jolokia access when bind host and port are changed `#146 <https://github.com/ansible-middleware/amq/pull/146>`_
+
+v2.1.0
+======
+
+Major Changes
+-------------
+
+- Update default jdk11 to jdk17 `#132 <https://github.com/ansible-middleware/amq/pull/132>`_
+
+Minor Changes
+-------------
+
+- Add config for in-vm acceptors/connectors `#135 <https://github.com/ansible-middleware/amq/pull/135>`_
+- Federated addressing `#137 <https://github.com/ansible-middleware/amq/pull/137>`_
+- Update to artemis 2.34.0 / amq_broker 7.12 `#136 <https://github.com/ansible-middleware/amq/pull/136>`_
+
+v2.0.2
+======
+
+Minor Changes
+-------------
+
+- Set minimum ansible-core version to >=2.15 `#127 <https://github.com/ansible-middleware/amq/pull/127>`_
+
+Bugfixes
+--------
+
+- Artemis command to create broker instance uses correct JAVA_HOME `#125 <https://github.com/ansible-middleware/amq/pull/125>`_
+- Fix ``broker-connections`` templating error, add missing parameters `#133 <https://github.com/ansible-middleware/amq/pull/133>`_
+- Fix configuration of multicast addresses/queues `#131 <https://github.com/ansible-middleware/amq/pull/131>`_
+- Improve validations for offline installs `#124 <https://github.com/ansible-middleware/amq/pull/124>`_
+
+v2.0.1
+======
 
 Minor Changes
 -------------

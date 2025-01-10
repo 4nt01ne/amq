@@ -20,14 +20,6 @@ To install, from the collection root directory, run:
 Versions
 --------
 
-| AMQ VERSION | Release Date      | Artemis Version | Notes           |
-|:------------|:------------------|:----------------|:----------------|
-| `AMQ 7.11`  | 2023.Q2           | `2.28.0`        |[Release Notes](https://access.redhat.com/documentation/en-us/red_hat_amq_broker/7.11/html/release_notes_for_red_hat_amq_broker_7.11/index)|
-| `AMQ 7.10`  | 2021.Q4           | `2.21.0`        |[Release Notes](https://access.redhat.com/documentation/en-us/red_hat_amq_broker/7.10/html/release_notes_for_red_hat_amq_broker_7.10/index)|
-| `AMQ 7.9`   | 2021.Q3           | `2.18.0`        |[Release Notes](https://access.redhat.com/documentation/en-us/red_hat_amq/2021.q3/html-single/release_notes_for_red_hat_amq_broker_7.9/index)|
-| `AMQ 7.8`   | 2020.Q4           | `2.16.0`        |[Release Notes](https://access.redhat.com/documentation/en-us/red_hat_amq/2020.q4/html-single/release_notes_for_red_hat_amq_broker_7.8/index)|
-
-
 AMQ 7 Broker and Clients LTS Support Policy: https://access.redhat.com/articles/7009946
 
 
@@ -39,7 +31,7 @@ Role Defaults
 
 | Variable | Description | Default |
 |:---------|:------------|:--------|
-|`activemq_version`| Apache Artemis version | `2.32.0` |
+|`activemq_version`| Apache Artemis version | `2.34.0` |
 |`activemq_archive`| Apache Artemis install archive filename | `apache-artemis-{{ activemq_version }}-bin.zip` |
 |`activemq_download_url`| Apache Artemis download URL | `https://archive.apache.org/dist/activemq/activemq-artemis/{{ activemq_version }}/{{ activemq_archive }}` |
 |`activemq_installdir`| Apache Artemis Installation path | `{{ activemq_dest }}/apache-artemis-{{ activemq_version }}` |
@@ -71,9 +63,9 @@ Role Defaults
 |`activemq_bind_address`| Service bind address | `0.0.0.0` |
 |`activemq_host`| Service hostname | `localhost` |
 |`activemq_http_port`| Service http port serving console and REST api | `8161` |
-|`activemq_jolokia_url`| URL for jolokia REST api | `http://{{ activemq_host }}:{{ activemq_http_port }}/console/jolokia` |
-|`activemq_console_url`| URL for console service | `http://{{ activemq_host }}:{{ activemq_http_port }}/console/` |
-|`activemq_jvm_package`| RPM package to install for the service | `java-11-openjdk-headless` |
+|`activemq_jolokia_url`| URL for jolokia REST api | `{{ activemq_console_url }}/jolokia` |
+|`activemq_console_url`| URL for console service | `{{ activemq_console_bind_url }}/console/` |
+|`activemq_jvm_package`| RPM package to install for the service | `java-17-openjdk-headless` |
 |`activemq_java_opts`| Additional JVM options for the service | `-Xms512M -Xmx2G [...]` |
 |`activemq_port`| Main port for the broker instance | `61616` |
 |`activemq_port_hornetq`| hornetq port for the broker instance | `5445` |
@@ -93,6 +85,9 @@ Role Defaults
 |`activemq_additional_libs`| List of jars to install in activemq classpath, read from playbook files lookup paths | `[]` |
 |`activemq_mask_password_hashname`| Name of algorithm used for masking password, will be passed to custom codec | `sha1` |
 |`activemq_mask_password_iterations`| Number of iterations for masking password, will be passed to custom codec | `1024` |
+|`activemq_properties_file`| Properties file to allow updates and additions to the broker configuration after any xml has been parsed | `""` |
+|`activemq_modular_configuration`| Whether or not to enable XInclude modular configuration of broker.xml | `false` |
+|`activemq_console_bind_url`| The value to use in bootstrap.xml for web console binding | `http{{ 's' if activemq_tls_enabled else '' }}://{{ activemq_bind_address }}:{{ activemq_http_port }}` |
 
 
 #### LDAP authN/authZ
@@ -116,6 +111,8 @@ Role Defaults
 |`activemq_auth_ldap_role_search` | Role search attribute | `(member={0})` |
 |`activemq_auth_ldap_role_search_subtree` | Whether to enable subtree role search | `False` |
 |`activemq_auth_ldap_referral` | Specify how to handle referrals; valid values: ignore, follow, throw | `ignore` |
+|`activemq_auth_ldap_expand_roles` | Whether to enable role expansion functionality; if enabled, then roles within roles will be found | `false` |
+|`activemq_auth_ldap_expand_roles_matching` | An LDAP search filter which is applied to the subtree selected by roleBase | `(member={0})` |
 
 
 #### Journal configuration
@@ -140,6 +137,9 @@ Role Defaults
 |`activemq_journal_file_size`| The size (in bytes) of each journal file | `10M` |
 |`activemq_journal_buffer_timeout`| The Flush timeout for the journal buffer | `500000` if 'ASYNCIO' else `3333333` |
 |`activemq_journal_max_io`| The maximum number of write requests that can be in the ASYNCIO queue at any one time | `4096` if 'ASYNCIO' else `1` |
+|`activemq_journal_buffer_size`| The size of the internal buffer on the journal in KB  | `490KiB` |
+|`activemq_disk_scan_period`| The interval where the disk is scanned for percentual usage | `5000` |
+|`activemq_max_disk_usage`| The max percentage of data we should use from disks. The System will block while the disk is full | `96` |
 |`activemq_db_enabled`| Whether to enable JDBC persistence | `False` |
 |`activemq_db_jdbc_url`| The full JDBC connection URL for your database server | `jdbc:derby:target/derby/database-store;create=true` |
 |`activemq_db_bindings_table`| The name of the table in which bindings data will be persisted | `BINDINGS_TABLE` |
@@ -148,17 +148,28 @@ Role Defaults
 |`activemq_db_jdbc_driver_class`| The fully qualified class name of the desired database Driver | `org.apache.derby.jdbc.EmbeddedDriver` |
 
 
+#### Critical Analyzer
+
+| Variable | Description | Default |
+|:---------|:------------|:--------|
+|`activemq_critical_analyzer`| Should the broker detect dead locks and other issues | `true` |
+|`activemq_critical_analyzer_timeout`| Timeout used to do the critical analysis (milliseconds) | `120000` |
+|`activemq_critical_analyzer_check_period`| Time used to check the response times (milliseconds) | `60000` |
+|`activemq_critical_analyzer_policy`| Should the server log, be halted or shutdown upon failures (one of LOG, HALT, SHUTDOWN) | `LOG` |
+
+
 #### Acceptors / connectors
 
 | Variable | Description | Default |
 |:---------|:------------|:--------|
-|`activemq_acceptors`| Acceptors configuration; list of `{ name(str), bind_address(str), bind_port(int), parameters(dict) }` | Generate same configuration as `artemis create` |
-|`activemq_connectors`| Connectors configuration; list of `{ name(str), address(str), port(int), parameters(dict) }` | Generate same configuration as `artemis create` |
+|`activemq_acceptors`| Acceptors configuration; list of `{ name(str), scheme(str), bind_address(str), bind_port(int), parameters(dict) }` | Generate same configuration as `artemis create` |
+|`activemq_connectors`| Connectors configuration; list of `{ name(str), scheme(str), address(str), port(int), parameters(dict) }` | Generate same configuration as `artemis create` |
 
 Sample acceptor:
 
 ```yaml
   - name: amqp
+    scheme: tcp
     bind_address: {{ activemq_host }}
     bind_port: {{ activemq_port_amqp }}
     parameters:
@@ -176,6 +187,7 @@ Sample connector with TLS:
 
 ```yaml
   - name: amqp
+    scheme: tcp
     address: 172.168.10.43
     port: 61616
     parameters:
@@ -189,6 +201,14 @@ Sample connector with TLS:
       trustStorePath: "{{ activemq_tls_truststore_dest }}"
       trustStorePassword: "{{ activemq_tls_truststore_password }}"
       verifyHost: False
+```
+
+
+Sample in-vm acceptor:
+
+```yaml
+  - name: in_vm
+    scheme: vm
 ```
 
 
@@ -262,19 +282,34 @@ Sample divert:
 | Variable | Description | Default |
 |:---------|:------------|:--------|
 |`activemq_ha_enabled`| Whether to enable clustering | `False` |
+|`activemq_cluster_enabled`| Whether or not to enable clustering (cluster-connections) | `{{ activemq_ha_enabled }}` |
 |`activemq_cluster_user`| Cluster username | `amq-cluster-user` |
 |`activemq_cluster_pass`| Cluster user password | `amq-cluster-pass` |
 |`activemq_cluster_maxhops`| Cluster max hops | `1` |
 |`activemq_cluster_lb_policy`| Policy for cluster load balancing | `ON_DEMAND` |
+|`activemq_scale_down_enabled` | Whether or not clustering supports scale-down" | `false` |
 |`activemq_ha_role` | Instance role for high availability | `live-only` |
-|`activemq_replicate`| Enables replication | `False` |
+|`activemq_replication`| Enables replication | `False` |
 |`activemq_replicated`| Designate instance as replicated node | `False` |
-|`activemq_cluster_discovery` | Cluster discovery: [`jgroups` (shared file ping), `multicast` (UDP), `static` (node list)] | `static` |
+|`activemq_cluster_discovery` | Cluster discovery: [`jgroups` (shared file ping), `multicast` (UDP), `static` (node list), `provided` (use `activemq_cluster_connections`)] | `static` |
+|`activemq_cluster_connections`| The list of cluster connection names from the connectors list, when `activemq_cluster_discovery` = provided | `[]` |
 |`activemq_cluster_iface` | The NIC name to be used for cluster IPv4 addresses (ie. 'eth0') | `default_ipv4` |
 |`activemq_systemd_wait_for_port` | Whether systemd unit should wait for activemq port before returning | `True` when `activemq_ha_enabled` is `True` and `activemq_shared_storage` is `False` |
 |`activemq_systemd_wait_for_log` | Whether systemd unit should wait for service to be up in logs | `True` when `activemq_ha_enabled` and `activemq_shared_storage` are both `True` |
 |`activemq_systemd_wait_for_timeout`| How long to wait for service to be alive (seconds) | `60` |
 |`activemq_systemd_wait_for_delay`| Activation delay for service systemd unit | `10` |
+|`activemq_systemd_wait_for_log_ha_string` | The string to match in the logs when `activemq_systemd_wait_for_log` is true and HA is enabled | `AMQ221109\|AMQ221001\|AMQ221034` |
+|`activemq_systemd_wait_for_log_string` | The string to match in the logs when `activemq_systemd_wait_for_log` is true and HA is not enabled | `AMQ221034` |
+|`activemq_systemd_wait_for_port_number`| The port number to wait for when `activemq_systemd_wait_for_port` is true | `{{ activemq_port }}` |
+|`activemq_systemd_expand_environment` | Whether or not to expand the environment in the sysconfig file. If true, environment file is sourced and the activemq process is started in a shell | `false` |
+|`activemq_ha_allow_failback`| Whether a server will automatically stop when another places a request to take over its place |`true` |
+|`activemq_ha_failover_on_shutdown`| Will this backup server become active on a normal server shutdown  | `true` |
+|`activemq_ha_restart_backup`| Will this server, if a backup, restart once it has been stopped because of failback or scaling down | `false` |
+|`activemq_ha_check_for_active_server`| Whether to check the cluster for a live server using our own server ID when starting up. This option is only necessary for performing 'fail-back' on replicating servers | `false` |
+|`activemq_ha_replication_cluster_name`| Name of the cluster configuration to use for replication. This setting is only necessary in case you configure multiple cluster connections | `""` |
+|`activemq_ha_replication_group_name`| With replication, if set, remote backup servers will only pair with primary servers with matching group-name | `""` |
+|`activemq_ha_vote_on_replication_failure`| Whether this broker should vote to remain active if replication is lost. Only valid for quorum voting. | `false` |
+|`activemq_ha_quorum_size`| The quorum size used for voting after replication loss, -1 means use the current cluster size. Only valid for quorum voting | `-1` |
 
 
 #### Multi-site fault-tolerance (AMQP broker connections)
@@ -293,25 +328,42 @@ activemq_broker_connections:
     operations:
       - type: mirror
         parameters:
-          queue-removal: false
+          queue_removal: false
 ```
 
 Sample for sender-receiver operation:
 
 ```yaml
 activemq_broker_connections:
-  - uri: 'tcp://<hostname>:<port>'
+  - uri: 'tcp://<hostname>:<port>?<options>'
     name: other-server
+    user: user
+    password: password
     operations:
       - type: sender
         parameters:
-          address-match: 'queues.#'
+          address_match: 'queues.#'
       - type: receiver
         parameters:
-          address-match: 'remotequeues.#'
+          address_match: 'remotequeues.#'
 ```
 
-Notice the local queues for `remotequeues.#` need to be created on this broker.
+Note: operations parameters keys are using underscore (`address_match:`) instead of dash (`address-match:`). Dash works only if using single quotes (ie. `'address-match':`)
+
+Note: the local queues for `remotequeues.#` need to be created on this broker.
+
+
+#### Network check
+
+| Variable | Description | Default |
+|:---------|:------------|:--------|
+|`activemq_network_check_enabled`| Whether to enable network check | `false` |
+|`activemq_network_check_period`| How often to check network reachability (ms) | `10000` |
+|`activemq_network_check_timeout`| Connection timeout for network checks (ms) | `1000` |
+|`activemq_network_check_list`| The addresses to use for checking; comma separated list, no spaces, just DNS or IPs | `''` |
+|`activemq_network_check_NIC`| The network card to use for network checking | `''` |
+|`activemq_network_check_ping_command`| The ping command to network check IPv4 | `''` |
+|`activemq_network_check_ping6_command`|The ping command to network check IPv6 | `''` |
 
 
 #### TLS/SSL protocol
@@ -345,6 +397,27 @@ See _Role Variables_ below for additional TLS/SSL settings.
 |`activemq_logger_audit_rollover_files`| Number of rollover audit log files | `5` | `'log4j2.properties' if activemq_version is version_compare('2.27.0', '>=') else 'logging.properties'` |
 |`activemq_logger_config_template_path` | Optional subdirectory of any playbook template lookup directories for the logging facility configuration | `''` |
 |`activemq_logger_config_keep_name` | Whether to keep the custom template filename or use the default | `False` |
+|`activemq_logger_filepath` | Path for main logfile relative to instance directory | `/log/artemis.log` |
+
+
+#### Broker plugins
+
+| Variable | Description | Default |
+|:---------|:------------|:--------|
+|`activemq_broker_plugins`| The list of broker-plugins configurations (dict: { class_name, properties(dict) }) | `[]` |
+
+Sample:
+
+```yaml
+activemq_broker_plugins:
+  - class_name: org.apache.activemq.artemis.core.server.plugin.impl.LoggingActiveMQServerPlugin
+    properties:
+      LOG_DELIVERING_EVENTS: true
+      LOG_SENDING_EVENTS: true
+  - class_name: org.apache.activemq.artemis.core.server.plugin.impl.NotificationActiveMQServerPlugin
+    properties:
+      SEND_SESSION_NOTIFICATIONS: true
+```
 
 
 #### Other options
@@ -366,6 +439,9 @@ See _Role Variables_ below for additional TLS/SSL settings.
 |`activemq_config_xml`| Broker instance configuration file | `amq-broker.xml` |
 |`activemq_config_override_template`| Filename of custom broker xml configuration file to be deployed | `''` |
 |`activemq_service_override_template`| Filename of custom systemd unit template to be deployed | `''` |
+|`activemq_message_counter_enabled`| Whether to enable the message counters | `false` |
+|`activemq_message_counter_sample_period`| The sample period (in ms) to use for message counters| `10000` |
+|`activemq_message_counter_max_day_history`| How many days to keep message counter history| `10` |
 
 
 #### User / Role configuration
